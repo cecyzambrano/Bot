@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente Virtual de Refrescos</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .chat-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 450px;
+      height: 520px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background-color: #27ae60;
+      color: white;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .msg.user {
+      background-color: #e3f2fd;
+      color: #1e3a8a;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    .msg.bot {
+      background-color: #f1f5f9;
+      color: #334155;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+    .chat-input-area {
+      display: flex;
+      padding: 12px;
+      background-color: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      gap: 8px;
+    }
+    .chat-input-area input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .chat-input-area button {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input-area button:hover {
+      background-color: #219150;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-box">
+    <div class="chat-header">💬 Asistente de Ventas</div>
+    
+    <div class="chat-messages" id="mensajes">
+      <div class="msg bot">¡Hola! ¿En qué puedo ayudarte hoy con tus pedidos de refresco?</div>
+    </div>
+
+    <form class="chat-input-area" id="formChat">
+      <input type="text" id="inputMensaje" placeholder="Escribe tu consulta..." required autocomplete="off">
+      <button type="submit" id="btnEnviar">Enviar</button>
+    </form>
+  </div>
+
+  <script>
+    // Coloca la URL de tu Webhook de Make para el Chatbot
+    const WEBHOOK_CHAT_URL = "https://hook.us2.make.com/bokiq0qs2twkb055moeompwow435dpbh";
+
+    const form = document.getElementById('formChat');
+    const input = document.getElementById('inputMensaje');
+    const contenedor = document.getElementById('mensajes');
+    const boton = document.getElementById('btnEnviar');
+
+    function agregarMensaje(texto, remitente) {
+      const div = document.createElement('div');
+      div.className = `msg ${remitente}`;
+      div.textContent = texto;
+      contenedor.appendChild(div);
+      contenedor.scrollTop = contenedor.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mensajeTexto = input.value.trim();
+      if (!mensajeTexto) return;
+
+      agregarMensaje(mensajeTexto, 'user');
+      input.value = '';
+      boton.disabled = true;
+
+      try {
+        const res = await fetch(WEBHOOK_CHAT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensaje: mensajeTexto })
+        });
+
+        if (!res.ok) throw new Error("Error en la respuesta");
+
+        const data = await res.json();
+        // Muestra la respuesta que devuelve tu Webhook response
+        agregarMensaje(data.respuesta || data, 'bot');
+      } catch (err) {
+        console.error(err);
+        agregarMensaje("Hubo un error al conectar con el asistente.", 'bot');
+      } finally {
+        boton.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+
+</body>
+</html>
